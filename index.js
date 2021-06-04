@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs')
 const readline = require('readline')
 
-const recFindByExt = (base, ext, files, result) => {
+const recFindByExt = (base, ext, files, result, keywords) => {
   files = files || fs.readdirSync(base)
   result = result || {}
 
@@ -14,8 +14,12 @@ const recFindByExt = (base, ext, files, result) => {
       else {
         if (file.substr(-1 * (ext.length + 1)) === '.' + ext) {
           const exactFile = newbase.split('/')
-          result[exactFile[exactFile.length - 1]] = '1'
-          console.log(result)
+
+          // if (fs.readFileSync(newbase, 'utf-8')) {
+          //   result[exactFile[exactFile.length - 1]] = 'has'
+          // } else {
+          //   result[exactFile[exactFile.length - 1]] = '0'
+          // }
         }
       }
     }
@@ -23,12 +27,12 @@ const recFindByExt = (base, ext, files, result) => {
   return result
 }
 
-const helper = (ext) => {
+const helper = (ext, keywords) => {
   const final = []
   for(let i = 0; i < ext.length; i++) {
-    final.push(recFindByExt(path.join(__dirname, '../', 'inrating.top', 'src'),ext[i]))
+    final.push(recFindByExt(path.join(__dirname, '../', 'inrating.top', 'src'), ext[i], keywords))
   }
   return final
 }
 
-console.log(helper(['vue', 'js', 'ts']))
+helper(['vue', 'js', 'ts'], ['api', '$http'])
