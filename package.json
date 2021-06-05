@@ -1,0 +1,32 @@
+{
+  "name": "recursive-file-searcher",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivanShyian/node-recursive-file-searcher.git"
+  },
+  "keywords": [
+    "NODE",
+    "FS",
+    "EXPRESS"
+  ],
+  "author": "ivanShyian (shyian.ivan@yahoo.com)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ivanShyian/node-recursive-file-searcher/issues"
+  },
+  "homepage": "https://github.com/ivanShyian/node-recursive-file-searcher#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "nodemon": "^2.0.7"
+  },
+  "devDependencies": {
+    "line-reader": "^0.4.0"
+  }
+}
