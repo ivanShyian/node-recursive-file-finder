@@ -15,49 +15,53 @@ const recFindByExt = (base, ext, keywords, separator, files, result) => {
         const filePathArray = newbase.split(separator)
         const fileName = filePathArray[filePathArray.length - 1]
 
-        lineReader.eachLine(newbase, (line, last) => {
-          if (last) {
-            return false
-          }
-          if (line.search(keywords[0]) !== -1 || line.search(keywords[1]) !== -1) {
-            if (result.hasOwnProperty(fileName)) {
-              for (let key in result[fileName]) {
-                if (result[fileName].hasOwnProperty(key) && result[fileName][key].trim() !== line.trim()) {
-                  return result[fileName] = {
-                    ...result[fileName],
-                    [Object.keys(result[fileName]).length]: line.trim()
-                  }
-                }
-              }
-            }
-            return result[fileName] = {
-              0: line.trim()
-            }
-          }
-        })
+        result = lineReaderHelper(newbase, fileName, keywords, result)
       }
     }
   })
   return result
 }
 
-const helper = (ext, keywords, separator) => {
-  const final = []
-  for (let i = 0; i < ext.length; i++) {
-    final.push(recFindByExt(
-      path.join(__dirname, '../../$vue-js/$vue-inrating/inrating.top', 'src'),
-      searchFiles[i],
-      searchArray,
-      separator
-    ))
-  }
-  return final
+const lineReaderHelper = (pathname, fileName, keywords, result) => {
+  result = result || {}
+  lineReader.eachLine(pathname, (line, last) => {
+  
+    if (line.search(keywords[0]) !== -1 || line.search(keywords[1]) !== -1) {
+      if (result.hasOwnProperty(fileName)) {
+        for (let key in result[fileName]) {
+          if (result[fileName].hasOwnProperty(key)) {
+            if (result[fileName][key].trim() !== line.trim()) {
+              result[fileName] = {
+                ...result[fileName],
+                [Object.keys(result[fileName]).length]: line.trim()
+              }
+            }
+          }
+        }
+      }
+      result[fileName] = {
+        0: line.trim()
+      }
+    }
+
+    if (last) {
+      return false
+    }
+  })
+  return result
 }
 
 const searchFiles = ['vue', 'js', 'ts']
 const searchArray = [/api\./gmi, /\$http\./gmi]
 const separator = '\\'
+const finalArray = []
 
-const res = helper(searchFiles, searchArray, separator)
-
-console.log(res)
+for (let i = 0; i < searchFiles.length; i++) {
+  finalArray.push(recFindByExt(
+    path.join(__dirname, '../../$vue-js/$vue-inrating/inrating.top', 'src'),
+    searchFiles[i],
+    searchArray,
+    separator
+  ))
+}
+console.log(finalArray)
