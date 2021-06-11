@@ -1,12 +1,12 @@
 const path = require('path')
 const fs = require('fs')
-const lineReader = require('line-reader')
+const readline = require('readline')
 
 const recFindByExt = (base, ext, keywords, separator, files, result) => {
   files = files || fs.readdirSync(base)
   result = result || {}
 
-  files.forEach(file => {
+  files.forEach(async file => {
     const newbase = path.join(base, file)
     if (fs.statSync(newbase).isDirectory()) {
       result = recFindByExt(newbase, ext, keywords, separator, fs.readdirSync(newbase), result)
@@ -14,17 +14,23 @@ const recFindByExt = (base, ext, keywords, separator, files, result) => {
       if (file.substr(-1 * (ext.length + 1)) === '.' + ext) {
         const filePathArray = newbase.split(separator)
         const fileName = filePathArray[filePathArray.length - 1]
-
-        result = lineReaderHelper(newbase, fileName, keywords, result)
+        result = await lineReaderHelper(newbase, fileName, keywords, result)
       }
     }
   })
   return result
 }
 
-const lineReaderHelper = (pathname, fileName, keywords, result) => {
-  lineReader.eachLine(pathname, (line, last) => {
-  
+const lineReaderHelper = async(pathname, fileName, keywords, resultObj) => {
+  const result = resultObj
+  const fileStream = fs.createReadStream(pathname)
+
+  const r1 = readline.createInterface({
+    input: fileStream,
+    crlfDelay: Infinity
+  })
+
+  for await (const line of r1) {
     if (line.search(keywords[0]) !== -1 || line.search(keywords[1]) !== -1) {
       if (result.hasOwnProperty(fileName)) {
         const res = Object.keys(result[fileName])
@@ -43,11 +49,8 @@ const lineReaderHelper = (pathname, fileName, keywords, result) => {
         }
       }
     }
+  }
 
-    if (last) {
-      return false
-    }
-  })
   return result
 }
 
@@ -65,7 +68,7 @@ const runner = (pathSource, files, regex, separator) => {
   return finalArray
 }
 
-const searchFiles = ['vue', 'js', 'ts']
+const searchFiles = ['vue', 'js', 'ts', 'vue.ts']
 const searchWords = [/api\./gmi, /\$http\./gmi]
 const separator = '/'
 
