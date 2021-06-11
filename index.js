@@ -2,20 +2,20 @@ const path = require('path')
 const fs = require('fs')
 const readline = require('readline')
 
-const recFindByExt = (base, ext, keywords, separator, files, result) => {
+const recFindByExt = async(base, ext, keywords, separator, files, result) => {
   files = files || fs.readdirSync(base)
   result = result || {}
 
-  files.forEach(async file => {
+  await Promise.all(files.map(async file => {
     const newbase = path.join(base, file)
     if (fs.statSync(newbase).isDirectory()) {
-      result = recFindByExt(newbase, ext, keywords, separator, fs.readdirSync(newbase), result)
+      result = await recFindByExt(newbase, ext, keywords, separator, fs.readdirSync(newbase), result)
     } else {
       if (file.substr(-1 * (ext.length + 1)) === '.' + ext) {
         result = await lineReaderHelper(newbase, file, keywords, result)
       }
     }
-  })
+  }))
   return result
 }
 
@@ -53,23 +53,23 @@ const lineReaderHelper = async(pathname, fileName, keywords, resultObj) => {
 }
 
 
-const runner = (pathSource, files, regex, separator) => {
+const runner = async(pathSource, files, regex, separator) => {
   const finalArray = []
-  for (let i = 0; i < searchFiles.length; i++) {
-    finalArray.push(recFindByExt(
+  for (let i = 0; i < files.length; i++) {
+    const res = await recFindByExt(
       path.join(__dirname, pathSource),
       files[i],
       regex,
       separator
-    ))
+    )
+    finalArray.push(res)
   }
   return finalArray
 }
 
-const searchFiles = ['vue', 'js', 'ts', 'vue.ts']
-const searchWords = [/api\./gmi, /\$http\./gmi]
-const separator = '/'
 
-const res = runner('../inrating.top/src', searchFiles, searchWords, separator)
-console.log(res)
+(async () => {
+  const res = await runner('../inrating.top/src', ['vue', 'js', 'ts', 'vue.ts'], [/api\./gmi, /\$http\./gmi], '/')
+  console.log(res)
+})()
 
