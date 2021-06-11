@@ -3,11 +3,11 @@ const fs = require('fs')
 const readline = require('readline')
 
 
-const separator = '/'
-const mainDir = '../inrating.top/src'
+const separator = '\\'
+const mainDir = '../../$vue-js/$vue-inrating/inrating.top/src'
 const fileExtensions = ['vue', 'js', 'ts', 'vue.ts']
 const listOfKeywords = [/api\./gm, /\$http\./gm]
-const apiFilePath = '../inrating.top/src/common-components/api/api.ts'
+const apiFilePath = '../../$vue-js/$vue-inrating/inrating.top/src/common-components/api/api.ts'
 const listOfKeywordsForApi = [
   /(api\.)(\w+)(\.)(\w+)(\.)?(\w+)?(\.)?(\w+)?/m,
   /(\$http\.)(\w+)(\.)(\w+)(\.)?(\w+)?(\.)?(\w+)?/m
@@ -41,7 +41,6 @@ const lineReaderHelper = async(pathname, fileName, keywords, resultObj) => {
 
   for await (const line of r1) {
     if (line.search(keywords[0]) !== -1 || line.search(keywords[1]) !== -1) {
-      await findExactApiPath(line, keywords)
 
       if (result.hasOwnProperty(fileName)) {
         const res = Object.keys(result[fileName])
@@ -65,51 +64,58 @@ const lineReaderHelper = async(pathname, fileName, keywords, resultObj) => {
   return result
 }
 
-// <<Temp.. Do not try this at home (Temporary..)
-const findExactApiPath = async(line, keywords) => {
-  const res = line.match(listOfKeywordsForApi[0]) || line.match(listOfKeywordsForApi[1])
-  const apiRouteArray = res.filter((i, index) => index !== 0 
-    && index !== 1 
-    && i !== '.' 
-    && typeof i === 'string'
-  )
+const findExactApiPath = async(objectOfItems, keywords, apiPath) => {
+  const objHelper = objectOfItems
+  await Promise.all(Object.keys(objHelper).map(async file => {
+    await Promise.all(Object.keys(objHelper[file]).map(async idx => {
+       const regex = objHelper[file][idx].match(listOfKeywordsForApi[0]) || objHelper[file][idx].match(listOfKeywordsForApi[1])
+       const apiRouteArray = regex.filter((i, index) => 
+         index !== 0 
+          && index !== 1 
+           && i !== '.' 
+            && typeof i === 'string'
+       )
 
-  const apiName = apiRouteArray[apiRouteArray.length - 1]
-  const regEx1 = new RegExp(apiName, 'm')
+       const apiName = apiRouteArray[apiRouteArray.length - 1]
+       const regexOfApiName = new RegExp(` ${apiName}`, 'm')
+       const apiFileStream = fs.createReadStream(apiPath)
+       const rline = readline.createInterface({
+         input: apiFileStream,
+         crlfDelay: Infinity
+       })
 
-  const secondFileStream = fs.createReadStream(apiFilePath)
-  const r1 = readline.createInterface({
-    input: secondFileStream,
-    crlfDelay: Infinity
-  })
+       let nextLine = false
+       for await (const lineFromStream of rline) {
 
-  let nextLine = false
+         if (nextLine) {
+           nextLine = false
+           objHelper[file] = {...objHelper[file], [idx]: lineFromStream.trim()}
+         }
 
-
-  for await (const lineFromStream of r1) {
-    if (nextLine) {
-      nextLine = false
-    }
-
-    if (lineFromStream.search(regEx1) !== -1) {
-      nextLine = true
-    }
-  }
+         if (lineFromStream.search(regexOfApiName) !== -1) {
+           nextLine = true
+         }
+       }
+    }))
+  }))
+  return objHelper
 }
-// Temp>>
 
-const runner = async(pathSource, files, regex, separator) => {
-  const finalArray = []
-  for (let i = 0; i < files.length; i++) {
-    const res = await recFindByExt(
+const runner = async(pathSource, files, regex, separator, extraRegex, api) => {
+  let finalObj = {}
+
+  await Promise.all(files.map(async file => {
+    const result = await recFindByExt(
       path.join(__dirname, pathSource),
-      files[i],
+      file,
       regex,
       separator
     )
-    finalArray.push(res)
-  }
-  return finalArray
+
+    const res = await findExactApiPath(result, extraRegex, api)
+    finalObj = {...finalObj, ...res}
+  }))
+  return finalObj
 }
 
 
@@ -118,7 +124,10 @@ const runner = async(pathSource, files, regex, separator) => {
       mainDir, 
       fileExtensions, 
       listOfKeywords, 
-      separator
+      separator,
+      listOfKeywordsForApi,
+      apiFilePath
     )
+  console.log(Object.keys(res).length)
 })()
 
