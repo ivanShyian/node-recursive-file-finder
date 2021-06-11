@@ -12,9 +12,7 @@ const recFindByExt = (base, ext, keywords, separator, files, result) => {
       result = recFindByExt(newbase, ext, keywords, separator, fs.readdirSync(newbase), result)
     } else {
       if (file.substr(-1 * (ext.length + 1)) === '.' + ext) {
-        const filePathArray = newbase.split(separator)
-        const fileName = filePathArray[filePathArray.length - 1]
-        result = await lineReaderHelper(newbase, fileName, keywords, result)
+        result = await lineReaderHelper(newbase, file, keywords, result)
       }
     }
   })
