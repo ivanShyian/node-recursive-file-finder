@@ -3,3 +3,7 @@ node_modules
 .idea*
 package-lock.json
 test.json
+
+mobile.json
+submodule.json
+desktop+submodule.json
